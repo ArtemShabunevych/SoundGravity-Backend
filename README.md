@@ -1,4 +1,4 @@
-# Sound-backend
+# SoundGravity-backend
 Технології
 Frontend: React, TypeScript, Redux Toolkit, React Router, Axios
 Backend: NestJS, TypeScript
