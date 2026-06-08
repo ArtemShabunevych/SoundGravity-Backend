@@ -1,46 +1,50 @@
-import { Controller, Post, Body, UseInterceptors, UploadedFiles, Get, Param, Patch, Delete } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+
+import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param, Patch, Delete } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { TracksService } from './tracks.service';
 import { CreateTrackDto } from './dto/create-track.dto';
-
 import { UpdateTrackDto } from './dto/update-track.dto';
+
+interface UploadedAudioFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  buffer: Buffer;
+  size: number;
+}
+
 @Controller('tracks')
 export class TracksController {
   constructor(private readonly tracksService: TracksService) {}
 
   @Post()
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'audio', maxCount: 1 },
-      { name: 'cover', maxCount: 1 },
-    ]),
-  )
+  // Перехоплюємо лише один бінарний файл з назвою 'audio'
+  @UseInterceptors(FileInterceptor('audio'))
   create(
     @Body() createTrackDto: CreateTrackDto,
-    @UploadedFiles() files: { audio?: Express.Multer.File[], cover?: Express.Multer.File[] },
+    @UploadedFile() audioFile: UploadedAudioFile,
   ) {
-    const audioFile = files.audio?.[0];
-    const coverFile = files.cover?.[0];
-
-    return this.tracksService.create(createTrackDto, audioFile, coverFile);
+    return this.tracksService.create(createTrackDto, audioFile);
   }
 
-@Get()
-findAll() {
-  return this.tracksService.findAll();
-}
+  @Get()
+  findAll() {
+    return this.tracksService.findAll();
+  }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.tracksService.findOne(id);
+  }
 
-@Get(':id')
-findOne(@Param('id') id: string) {
-  return this.tracksService.findOne(id);
-}
-@Patch(':id')
-update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto) {
-  return this.tracksService.update(id, updateTrackDto);
-}
-@Delete(':id')
-remove(@Param('id') id: string) {
-  return this.tracksService.remove(id);
-}
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto) {
+    return this.tracksService.update(id, updateTrackDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.tracksService.remove(id);
+  }
 }
