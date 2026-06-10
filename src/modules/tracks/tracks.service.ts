@@ -5,7 +5,7 @@ import { Track } from './entities/track.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 
 @Injectable()
 export class TracksService {
