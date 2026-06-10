@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Track } from '../../tracks/entities/track.entity';
 
 @Entity('users')
@@ -12,6 +19,8 @@ export class User {
   @Column()
   username: string;
 
+  @Column()
+  password: string;
 
   @OneToMany(() => Track, (track) => track.user)
   tracks: Track[];
