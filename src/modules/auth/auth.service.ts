@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException, } from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,7 +7,7 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
-
+import * as crypto from 'crypto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -61,7 +57,6 @@ export class AuthService {
   async login(dto: LoginUserDto) {
     const user = await this.authRepository.findOne({
       where: { email: dto.email },
-      // ВИПРАВЛЕНО: Замість масиву ['id', 'username', 'password'] використовуємо об'єкт
       select: {
         id: true,
         username: true,
@@ -108,5 +103,25 @@ export class AuthService {
 
   verifyAccessToken(token: string) {
     return this.jwtService.verify(token);
+  }
+  async loginOrCreateGoogleUser(googleUser: { email: string; username: string }) {
+
+    let user = await this.authRepository.findOne({
+      where: { email: googleUser.email },
+    });
+
+    if (!user) {
+
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      user = this.authRepository.create({
+        email: googleUser.email,
+        username: googleUser.username,
+        password: hashedPassword,
+      });
+
+      user = await this.authRepository.save(user);
+    }
   }
 }

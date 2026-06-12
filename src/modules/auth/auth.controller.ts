@@ -1,14 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Headers,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthService } from './auth.service';
+import { AuthGuard } from '@nestjs/passport';
+import { Req, UseGuards } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
@@ -37,4 +32,14 @@ export class AuthController {
   refresh(@Body('refreshToken') refreshToken: string) {
     return this.authService.refresh(refreshToken);
   }
-}
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req) {
+
+  }
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req) {
+    return this.authService.loginOrCreateGoogleUser(req.user);
+  }
+  }

@@ -2,6 +2,7 @@ import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from '../modules/users/entities/user.entity';
 import { Track } from '../modules/tracks/entities/track.entity';
+import { Playlist } from '../modules/playlists/entities/playlist.entity';
 
 export const databaseConfig: TypeOrmModuleAsyncOptions = {
   imports: [ConfigModule],
@@ -13,7 +14,7 @@ export const databaseConfig: TypeOrmModuleAsyncOptions = {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
-    entities: [User, Track],
+    entities: [User, Track, Playlist],
     synchronize: true,
   }),
 };

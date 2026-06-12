@@ -1,28 +1,38 @@
-import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param, Patch, Delete } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+// src/modules/tracks/tracks.controller.ts
+import {
+  Controller,
+  Post,
+  Body,
+  UseInterceptors,
+  UploadedFiles,
+  Get,
+  Param,
+  Patch,
+  Delete,
+  BadRequestException, UseGuards,
+} from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { TracksService } from './tracks.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
-
-interface UploadedAudioFile {
-  fieldname: string;
-  originalname: string;
-  encoding: string;
-  mimetype: string;
-  buffer: Buffer;
-  size: number;
-}
+import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 
 @Controller('tracks')
 export class TracksController {
   constructor(private readonly tracksService: TracksService) {}
-
   @Post()
-  @UseInterceptors(FileInterceptor('audio'))
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'audio', maxCount: 1 }
+  ]))
   create(
     @Body() createTrackDto: CreateTrackDto,
-    @UploadedFile() audioFile: UploadedAudioFile,
+    @UploadedFiles() files: { audio?: Express.Multer.File[] },
   ) {
+    const audioFile = files?.audio?.[0];
+    if (!audioFile) {
+      throw new BadRequestException('Аудіофайл (audio) є обов’язковим для завантаження');
+    }
     return this.tracksService.create(createTrackDto, audioFile);
   }
 
@@ -35,13 +45,14 @@ export class TracksController {
   findOne(@Param('id') id: string) {
     return this.tracksService.findOne(id);
   }
-
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto) {
     return this.tracksService.update(id, updateTrackDto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string) {
     return this.tracksService.remove(id);
   }

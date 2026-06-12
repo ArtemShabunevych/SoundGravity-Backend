@@ -1,3 +1,4 @@
+// src/modules/tracks/tracks.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,9 +18,9 @@ export class TracksService {
     private cloudinary: CloudinaryService,
   ) {}
 
-  async create(createTrackDto: CreateTrackDto, audioFile: any): Promise<Track> {
+  async create(createTrackDto: CreateTrackDto, audioFile: Express.Multer.File): Promise<Track> {
     if (!audioFile) {
-      throw new BadRequestException('Аудіофайл (mp3) є обов’язковим');
+      throw new BadRequestException('Аудіофайл (audio) є обов’язковим у форматі form-data');
     }
 
     const user = await this.userRepository.findOne({ where: { id: createTrackDto.userId } });
@@ -28,6 +29,7 @@ export class TracksService {
     }
 
     try {
+
       const [audioUpload, coverUpload] = await Promise.all([
         this.cloudinary.uploadAudioStream(audioFile.buffer),
         this.cloudinary.uploadImageBase64(createTrackDto.cover),
@@ -38,6 +40,7 @@ export class TracksService {
       const newTrack = this.trackRepository.create({
         title: createTrackDto.title,
         genre: createTrackDto.genre,
+        description: createTrackDto.description,
         audioUrl: audioUpload.secure_url,
         coverUrl: coverUpload.secure_url,
         dominantColor: dominantColor,

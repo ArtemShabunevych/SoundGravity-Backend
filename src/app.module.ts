@@ -7,6 +7,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { RefreshAccessTokenMiddleware } from "./middleware/refresh-token.middleware";
 import { AuthModule } from './modules/auth/auth.module';
+import { PlaylistsModule } from './modules/playlists/playlists.module';
+import { TracksModule } from './modules/tracks/tracks.module';
 
 @Module({
   imports: [
@@ -15,7 +17,9 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     UsersModule,
     DatabaseModule,
-    AuthModule
+    AuthModule,
+    TracksModule,
+    PlaylistsModule
   ],
   controllers: [AppController],
   providers: [AppService],

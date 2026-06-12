@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { IsOptional, IsString } from 'class-validator';
 
 @Entity('tracks')
 export class Track {
@@ -11,6 +12,10 @@ export class Track {
 
   @Column({ nullable: true })
   genre: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @Column()
   audioUrl: string;

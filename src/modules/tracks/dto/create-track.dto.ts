@@ -5,9 +5,12 @@ export class CreateTrackDto {
   @IsString()
   title: string;
 
-  @IsOptional()
   @IsString()
-  genre?: string;
+  genre: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @IsNotEmpty()
   @IsString()
