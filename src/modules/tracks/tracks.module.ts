@@ -6,10 +6,11 @@ import { Track } from './entities/track.entity';
 import { User } from '../users/entities/user.entity';
 import { CloudinaryModule } from '../../cloudinary/cloudinary.module';
 import { AuthModule } from '../auth/auth.module';
+import { Like } from '../likes/entities/like.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Track, User, ]),
+    TypeOrmModule.forFeature([Track, User, Like ]),
     CloudinaryModule,AuthModule
   ],
   controllers: [TracksController],

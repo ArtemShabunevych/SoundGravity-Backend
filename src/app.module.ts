@@ -9,6 +9,7 @@ import { RefreshAccessTokenMiddleware } from "./middleware/refresh-token.middlew
 import { AuthModule } from './modules/auth/auth.module';
 import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { TracksModule } from './modules/tracks/tracks.module';
+import { LikesModule } from './modules/likes/likes.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { TracksModule } from './modules/tracks/tracks.module';
     DatabaseModule,
     AuthModule,
     TracksModule,
-    PlaylistsModule
+    PlaylistsModule,
+    LikesModule
   ],
   controllers: [AppController],
   providers: [AppService],

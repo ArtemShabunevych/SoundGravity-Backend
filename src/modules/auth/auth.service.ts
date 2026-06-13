@@ -1,23 +1,25 @@
-import { BadRequestException, Injectable, UnauthorizedException, } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
-import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
+import { User } from '../users/entities/user.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User) private authRepository: Repository<User>,
-    private jwtService: JwtService,
-    private configService: ConfigService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>, // ⚠️ Використовуємо це ім'я скрізь
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(dto: CreateUserDto) {
-    const existingUser = await this.authRepository.findOne({
+    const existingUser = await this.userRepository.findOne({
       where: { email: dto.email },
     });
 
@@ -27,13 +29,13 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    const user = this.authRepository.create({
+    const user = this.userRepository.create({
       email: dto.email,
       username: dto.username,
       password: hashedPassword,
     });
 
-    const savedUser = await this.authRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
 
     const payload = { userId: savedUser.id, username: savedUser.username };
     const accessToken = this.jwtService.sign(payload, {
@@ -55,7 +57,7 @@ export class AuthService {
   }
 
   async login(dto: LoginUserDto) {
-    const user = await this.authRepository.findOne({
+    const user = await this.userRepository.findOne({
       where: { email: dto.email },
       select: {
         id: true,
@@ -90,10 +92,15 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     try {
-      const payload = await this.jwtService.verifyAsync(refreshToken);
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
       const newAccessToken = this.jwtService.sign(
         { userId: payload.userId, username: payload.username },
-        { expiresIn: '2h' },
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: '2h'
+        },
       );
       return { accessToken: newAccessToken };
     } catch (err) {
@@ -102,26 +109,45 @@ export class AuthService {
   }
 
   verifyAccessToken(token: string) {
-    return this.jwtService.verify(token);
+    return this.jwtService.verify(token, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+    });
   }
-  async loginOrCreateGoogleUser(googleUser: { email: string; username: string }) {
 
-    let user = await this.authRepository.findOne({
+  async loginOrCreateGoogleUser(googleUser: any) {
+    if (!googleUser) {
+      throw new BadRequestException('Дані від Google відсутні');
+    }
+
+    let user = await this.userRepository.findOne({
       where: { email: googleUser.email },
     });
 
     if (!user) {
-
       const randomPassword = crypto.randomBytes(16).toString('hex');
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-      user = this.authRepository.create({
+      user = this.userRepository.create({
         email: googleUser.email,
-        username: googleUser.username,
+        username: googleUser.firstName,
         password: hashedPassword,
       });
 
-      user = await this.authRepository.save(user);
+      await this.userRepository.save(user);
     }
+
+    const payload = { email: user.email, userId: user.id, username: user.username };
+
+    return {
+      access_token: this.jwtService.sign(payload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: '2h',
+      }),
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      },
+    };
   }
 }

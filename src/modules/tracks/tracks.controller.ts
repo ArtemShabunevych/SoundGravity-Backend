@@ -18,10 +18,10 @@ import { UpdateTrackDto } from './dto/update-track.dto';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 
 @Controller('tracks')
+@UseGuards(JwtAuthGuard)
 export class TracksController {
   constructor(private readonly tracksService: TracksService) {}
   @Post()
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'audio', maxCount: 1 }
   ]))
@@ -46,13 +46,11 @@ export class TracksController {
     return this.tracksService.findOne(id);
   }
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto) {
     return this.tracksService.update(id, updateTrackDto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string) {
     return this.tracksService.remove(id);
   }

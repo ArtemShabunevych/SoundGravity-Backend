@@ -10,7 +10,6 @@ export class PlaylistsService {
   constructor(
     @InjectRepository(Playlist)
     private playlistRepository: Repository<Playlist>,
-
     @InjectRepository(Track)
     private trackRepository: Repository<Track>,
   ) {}
