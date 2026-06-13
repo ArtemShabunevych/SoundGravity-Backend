@@ -22,6 +22,8 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ nullable: true })
+  description: string;
   @OneToMany(() => Track, (track) => track.user)
   tracks: Track[];
 

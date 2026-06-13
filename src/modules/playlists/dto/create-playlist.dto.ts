@@ -6,6 +6,13 @@ export class CreatePlaylistDto {
   name: string;
 
   @IsString()
+  genre: string;
+
+  @IsString()
   @IsOptional()
   description?: string;
+
+  @IsNotEmpty()
+  @IsString()
+  coverUrl: string;
 }

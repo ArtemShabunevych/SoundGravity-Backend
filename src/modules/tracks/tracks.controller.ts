@@ -1,4 +1,3 @@
-// src/modules/tracks/tracks.controller.ts
 import {
   Controller,
   Post,
@@ -9,13 +8,15 @@ import {
   Param,
   Patch,
   Delete,
-  BadRequestException, UseGuards,
+  BadRequestException, UseGuards, Req,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { TracksService } from './tracks.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
+import { VisibilityStatus } from '../../enums/visibility-status.enum';
+
 
 @Controller('tracks')
 @UseGuards(JwtAuthGuard)
@@ -53,5 +54,14 @@ export class TracksController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.tracksService.remove(id);
+  }
+  @Patch(':id/visibility')
+  @UseGuards(JwtAuthGuard)
+  async updateVisibility(
+    @Param('id') trackId: string,
+    @Req() req: any,
+    @Body('status') status: VisibilityStatus,
+  ) {
+    return this.tracksService.updateVisibility(trackId, req.user.id, status);
   }
 }

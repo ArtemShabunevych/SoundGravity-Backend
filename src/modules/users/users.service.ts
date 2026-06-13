@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { SetDescriptionDto } from './dto/set-description.dto';
 @Injectable()
 export class UsersService {
   constructor(
@@ -23,7 +24,18 @@ export class UsersService {
 
     return user;
   }
+  async setDescription(userId: string, dto: SetDescriptionDto) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
 
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.description = dto.newDescription;
+
+    return this.userRepository.save(user);
+  }
   async updateUsername(newUsername: string, userId: string) {
     const user = await this.userRepository.findOne({
       where: {
@@ -34,6 +46,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
 
     const existingUser = await this.userRepository.findOne({
       where: {

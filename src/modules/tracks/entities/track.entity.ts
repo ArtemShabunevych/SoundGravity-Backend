@@ -1,6 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { IsOptional, IsString } from 'class-validator';
+import { VisibilityStatus } from '../../../../common/enums/visibility-status.enum';
+import { Like } from '../../likes/entities/like.entity';
 
 @Entity('tracks')
 export class Track {
@@ -26,9 +35,21 @@ export class Track {
   @Column({ nullable: true })
   dominantColor: string;
 
+  @CreateDateColumn()
+  createdAt: Date;
+  @Column({
+    type: 'enum',
+    enum: VisibilityStatus,
+    default: VisibilityStatus.PUBLIC,
+  })
+  visibility: VisibilityStatus;
+
+  @Column({ default: 0 })
+  likesCount: number;
+
   @ManyToOne(() => User, (user) => user.tracks, { onDelete: 'CASCADE' })
   user: User;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @OneToMany(() => Like, (like) => like.track)
+  likes: Like[];
 }

@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Playlist } from './entities/playlist.entity'; 
-import { Track } from '../tracks/entities/track.entity';   
+import { Playlist } from './entities/playlist.entity';
+import { Track } from '../tracks/entities/track.entity';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
+import { VisibilityStatus } from '../../enums/visibility-status.enum';
+
+
 
 @Injectable()
 export class PlaylistsService {
@@ -59,5 +62,31 @@ export class PlaylistsService {
     await this.playlistRepository.save(playlist);
 
     return playlist;
+  }
+
+  async findAllPublic(status: VisibilityStatus) {
+    return this.playlistRepository.find({
+      where: { visibility: VisibilityStatus.PUBLIC },
+      order: { likesCount: 'DESC' },
+    });
+  }
+
+  async updateVisibility(playlistId: string, userId: string, status: VisibilityStatus) {
+    const playlist = await this.playlistRepository.findOne({
+      where: { id: playlistId },
+      relations: { user: true },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Плейліст не знайдено');
+    }
+
+
+    if (!playlist.user || playlist.user.id.toString() !== userId.toString()) {
+      throw new ForbiddenException('Ви не є власником цього плейліста');
+    }
+
+    playlist.visibility = status;
+    return this.playlistRepository.save(playlist);
   }
 }

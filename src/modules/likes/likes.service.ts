@@ -24,19 +24,20 @@ export class LikesService {
     }
 
     const existingLike = await this.likeRepository.findOne({
-      where: {
-        user: { id: userId },
-        track: { id: trackId },
-      },
+      where: { user: { id: userId }, track: { id: trackId } },
     });
 
     if (existingLike) {
       await this.likeRepository.remove(existingLike);
+      await this.trackRepository.decrement({ id: trackId }, 'likesCount', 1);
+
       return { liked: false, type: 'track' };
     }
 
     const newLike = this.likeRepository.create({ user, track, playlist: null });
     await this.likeRepository.save(newLike);
+    await this.trackRepository.increment({ id: trackId }, 'likesCount', 1);
+
     return { liked: true, type: 'track' };
   }
 
@@ -49,19 +50,20 @@ export class LikesService {
     }
 
     const existingLike = await this.likeRepository.findOne({
-      where: {
-        user: { id: userId },
-        playlist: { id: playlistId },
-      },
+      where: { user: { id: userId }, playlist: { id: playlistId } },
     });
 
     if (existingLike) {
       await this.likeRepository.remove(existingLike);
+      await this.playlistRepository.decrement({ id: playlistId }, 'likesCount', 1);
+
       return { liked: false, type: 'playlist' };
     }
 
     const newLike = this.likeRepository.create({ user, playlist, track: null });
     await this.likeRepository.save(newLike);
+    await this.playlistRepository.increment({ id: playlistId }, 'likesCount', 1);
+
     return { liked: true, type: 'playlist' };
   }
 }

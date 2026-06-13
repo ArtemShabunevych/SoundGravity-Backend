@@ -1,5 +1,5 @@
 // src/modules/tracks/tracks.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Track } from './entities/track.entity';
@@ -7,6 +7,8 @@ import { User } from '../users/entities/user.entity';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { VisibilityStatus } from '../../enums/visibility-status.enum';
+
 
 @Injectable()
 export class TracksService {
@@ -16,7 +18,8 @@ export class TracksService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private cloudinary: CloudinaryService,
-  ) {}
+  ) {
+  }
 
   async create(createTrackDto: CreateTrackDto, audioFile: Express.Multer.File): Promise<Track> {
     if (!audioFile) {
@@ -79,5 +82,23 @@ export class TracksService {
     const track = await this.findOne(id);
     await this.trackRepository.remove(track);
     return { message: 'Трек успішно видалено' };
+  }
+
+  async updateVisibility(trackId: string, userId: string, status: VisibilityStatus) {
+    const track = await this.trackRepository.findOne({
+      where: { id: trackId },
+      relations: { user: true },
+    });
+
+    if (!track) {
+      throw new NotFoundException('Трек не знайдено');
+    }
+
+    if (!track.user || track.user.id.toString() !== userId.toString()) {
+      throw new ForbiddenException('Ви не є власником цього треку');
+    }
+
+    track.visibility = status;
+    return this.trackRepository.save(track);
   }
 }

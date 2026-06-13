@@ -1,6 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany, JoinTable, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Track } from '../../tracks/entities/track.entity';
+import { VisibilityStatus } from '../../../../common/enums/visibility-status.enum';
+import { Like } from '../../likes/entities/like.entity';
+import { IsOptional, IsString } from 'class-validator';
 
 @Entity('playlists')
 export class Playlist {
@@ -10,8 +22,9 @@ export class Playlist {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
-  description: string;
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   @Column({ nullable: true })
   coverUrl: string;
@@ -20,10 +33,24 @@ export class Playlist {
   createdAt: Date;
 
 
+
+  @Column({
+    type: 'enum',
+    enum: VisibilityStatus,
+    default: VisibilityStatus.PUBLIC,
+  })
+  visibility: VisibilityStatus;
+
+  @Column({ default: 0 })
+  likesCount: number;
+
   @ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   user: User;
 
   @ManyToMany(() => Track)
   @JoinTable({ name: 'playlist_tracks' })
   tracks: Track[];
+
+  @OneToMany(() => Like, (like) => like.playlist)
+  likes: Like[];
 }
