@@ -10,9 +10,9 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Track } from '../../tracks/entities/track.entity';
-import { VisibilityStatus } from '../../../../common/enums/visibility-status.enum';
 import { Like } from '../../likes/entities/like.entity';
 import { IsOptional, IsString } from 'class-validator';
+import { VisibilityStatus } from '../../../enums/visibility-status.enum';
 
 @Entity('playlists')
 export class Playlist {

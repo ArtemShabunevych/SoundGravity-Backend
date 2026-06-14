@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { IsOptional, IsString } from 'class-validator';
-import { VisibilityStatus } from '../../../../common/enums/visibility-status.enum';
 import { Like } from '../../likes/entities/like.entity';
+import { VisibilityStatus } from '../../../enums/visibility-status.enum';
 
 @Entity('tracks')
 export class Track {

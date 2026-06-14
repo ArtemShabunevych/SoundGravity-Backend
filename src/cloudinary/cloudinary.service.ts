@@ -34,4 +34,19 @@ export class CloudinaryService {
       streamifier.createReadStream(fileBuffer).pipe(uploadStream);
     });
   }
+  async uploadAvatarBase64(
+    base64String: string | undefined,
+  ): Promise<UploadApiResponse> {
+    return await cloudinary.uploader.upload(<string>base64String, {
+      folder: 'soundgravity/avatars',
+      transformation: [
+        {
+          width: 150,
+          height: 150,
+          crop: 'fill',
+          gravity: 'face'
+        }
+      ],
+    });
+  }
 }

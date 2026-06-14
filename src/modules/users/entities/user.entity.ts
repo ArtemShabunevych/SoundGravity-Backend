@@ -24,6 +24,10 @@ export class User {
 
   @Column({ nullable: true })
   description: string;
+
+  @Column({ nullable: true })
+  avatarUrl: string;
+
   @OneToMany(() => Track, (track) => track.user)
   tracks: Track[];
 

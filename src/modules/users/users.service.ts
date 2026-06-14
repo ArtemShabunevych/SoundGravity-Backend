@@ -3,10 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { SetDescriptionDto } from './dto/set-description.dto';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>
+    @InjectRepository(User) private userRepository: Repository<User>,
+  private readonly cloudinaryService: CloudinaryService,
+
   ) {}
 
   findAll() {
@@ -96,5 +99,17 @@ export class UsersService {
       username: user.username,
       createdAt: user.createdAt
     };
+  }
+  async updateAvatar(userId: string, base64String: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('Користувача не знайдено');
+    }
+    const cloudinaryResponse = await this.cloudinaryService.uploadAvatarBase64(base64String);
+
+    user.avatarUrl = cloudinaryResponse.secure_url;
+
+    return this.userRepository.save(user);
   }
 }

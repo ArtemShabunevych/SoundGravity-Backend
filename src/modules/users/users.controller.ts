@@ -1,16 +1,18 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   Param,
   Patch,
   Req,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUsernameDto } from './dto/update-username.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SetDescriptionDto } from './dto/set-description.dto';
+
 
 @Controller('users')
 export class UsersController {
@@ -53,5 +55,17 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   updateUsername(@Body() dto: UpdateUsernameDto, @Req() req) {
     return this.usersService.updateUsername(dto.newUsername, req.user.userId);
+  }
+  @Patch('avatar')
+  @UseGuards(JwtAuthGuard)
+  async uploadAvatar(
+    @Req() req: any,
+    @Body('avatar') base64String: string
+  ) {
+    if (!base64String) {
+      throw new BadRequestException('Рядок Base64 не передано в полі avatar');
+    }
+
+    return this.usersService.updateAvatar(req.user.userId, base64String);
   }
 }
