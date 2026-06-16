@@ -63,7 +63,7 @@ export class UsersController {
     @Body('avatar') base64String: string
   ) {
     if (!base64String) {
-      throw new BadRequestException('Рядок Base64 не передано в полі avatar');
+      throw new BadRequestException('Base64 string not provided in avatar field');
     }
 
     return this.usersService.updateAvatar(req.user.userId, base64String);

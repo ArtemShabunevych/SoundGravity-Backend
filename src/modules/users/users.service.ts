@@ -12,8 +12,10 @@ export class UsersService {
 
   ) {}
 
-  findAll() {
-    return this.userRepository.find();
+  async findAll() {
+    const users = await this.userRepository.find();
+
+    return users.map(({ password, ...rest }) => rest);
   }
 
   async findOne(id: string) {
@@ -104,7 +106,7 @@ export class UsersService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundException('Користувача не знайдено');
+      throw new NotFoundException('User not found');
     }
     const cloudinaryResponse = await this.cloudinaryService.uploadAvatarBase64(base64String);
 

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateTrackDto {
   @IsNotEmpty()
@@ -15,8 +15,4 @@ export class CreateTrackDto {
   @IsNotEmpty()
   @IsString()
   cover: string;
-
-  @IsNotEmpty()
-  @IsUUID()
-  userId: string;
 }

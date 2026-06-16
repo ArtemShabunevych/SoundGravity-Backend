@@ -6,8 +6,6 @@ import { Track } from '../tracks/entities/track.entity';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
 
-
-
 @Injectable()
 export class PlaylistsService {
   constructor(
@@ -27,15 +25,30 @@ export class PlaylistsService {
   }
 
   async findOneWithTracks(playlistId: string) {
-    const [playlist] = await Promise.all([this.playlistRepository.findOne({
+    const playlist = await this.playlistRepository.findOne({
       where: { id: playlistId },
-      relations: {'tracks': true},
-    })]);
+      relations: { tracks: true },
+    });
 
     if (!playlist) {
-      throw new NotFoundException('Плейліст не знайдено');
+      throw new NotFoundException('Playlist not found');
     }
     return playlist;
+  }
+
+  async checkOwnership(playlistId: string, userId: string) {
+    const playlist = await this.playlistRepository.findOne({
+      where: { id: playlistId },
+      relations: { user: true },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+
+    if (!playlist.user || playlist.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this playlist');
+    }
   }
 
   async addTrackToPlaylist(playlistId: string, trackId: string) {
@@ -43,7 +56,7 @@ export class PlaylistsService {
 
     const track = await this.trackRepository.findOne({ where: { id: trackId } });
     if (!track) {
-      throw new NotFoundException('Трек не знайдено');
+      throw new NotFoundException('Track not found');
     }
 
     const trackExists = playlist.tracks.some((t) => t.id === trackId);
@@ -78,12 +91,11 @@ export class PlaylistsService {
     });
 
     if (!playlist) {
-      throw new NotFoundException('Плейліст не знайдено');
+      throw new NotFoundException('Playlist not found');
     }
 
-
-    if (!playlist.user || playlist.user.id.toString() !== userId.toString()) {
-      throw new ForbiddenException('Ви не є власником цього плейліста');
+    if (!playlist.user || playlist.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this playlist');
     }
 
     playlist.visibility = status;

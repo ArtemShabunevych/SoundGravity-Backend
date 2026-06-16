@@ -29,12 +29,13 @@ export class TracksController {
   create(
     @Body() createTrackDto: CreateTrackDto,
     @UploadedFiles() files: { audio?: Express.Multer.File[] },
+    @Req() req: any,
   ) {
     const audioFile = files?.audio?.[0];
     if (!audioFile) {
-      throw new BadRequestException('Аудіофайл (audio) є обов’язковим для завантаження');
+      throw new BadRequestException('Audio file (audio) is required');
     }
-    return this.tracksService.create(createTrackDto, audioFile);
+    return this.tracksService.create(createTrackDto, audioFile, req.user.userId);
   }
 
   @Get()
@@ -47,13 +48,13 @@ export class TracksController {
     return this.tracksService.findOne(id);
   }
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto) {
-    return this.tracksService.update(id, updateTrackDto);
+  update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto, @Req() req: any) {
+    return this.tracksService.update(id, updateTrackDto, req.user.userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tracksService.remove(id);
+  remove(@Param('id') id: string, @Req() req: any) {
+    return this.tracksService.remove(id, req.user.userId);
   }
   @Patch(':id/visibility')
   @UseGuards(JwtAuthGuard)
@@ -62,6 +63,6 @@ export class TracksController {
     @Req() req: any,
     @Body('status') status: VisibilityStatus,
   ) {
-    return this.tracksService.updateVisibility(trackId, req.user.id, status);
+    return this.tracksService.updateVisibility(trackId, req.user.userId, status);
   }
 }

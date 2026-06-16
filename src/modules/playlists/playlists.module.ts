@@ -4,12 +4,13 @@ import { PlaylistsService } from './playlists.service';
 import { PlaylistsController } from './playlists.controller';
 import { Playlist } from './entities/playlist.entity';
 import { Track } from '../tracks/entities/track.entity';
-import { AuthModule } from '../auth/auth.module';
 import { Like } from '../likes/entities/like.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Playlist, Track, Like]),AuthModule
+    TypeOrmModule.forFeature([Playlist, Track, Like]),
+    AuthModule,
   ],
   controllers: [PlaylistsController],
   providers: [PlaylistsService],

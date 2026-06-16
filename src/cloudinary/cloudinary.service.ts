@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import * as streamifier from 'streamifier';
 
@@ -7,7 +7,10 @@ export class CloudinaryService {
   async uploadImageBase64(
     base64String: string | undefined,
   ): Promise<UploadApiResponse> {
-    return await cloudinary.uploader.upload(<string>base64String, {
+    if (!base64String) {
+      throw new BadRequestException('Base64 string is required');
+    }
+    return await cloudinary.uploader.upload(base64String, {
       colors: true,
       folder: 'soundgravity/covers',
       transformation: [{ width: 500, height: 500, crop: 'limit' }],
@@ -25,7 +28,7 @@ export class CloudinaryService {
           if (error) return reject(error);
 
           if (!result) {
-            return reject(new Error('Cloudinary не повернув результат завантаження'));
+            return reject(new Error('Cloudinary upload returned no result'));
           }
 
           resolve(result);
@@ -34,10 +37,14 @@ export class CloudinaryService {
       streamifier.createReadStream(fileBuffer).pipe(uploadStream);
     });
   }
+
   async uploadAvatarBase64(
     base64String: string | undefined,
   ): Promise<UploadApiResponse> {
-    return await cloudinary.uploader.upload(<string>base64String, {
+    if (!base64String) {
+      throw new BadRequestException('Base64 string is required');
+    }
+    return await cloudinary.uploader.upload(base64String, {
       folder: 'soundgravity/avatars',
       transformation: [
         {

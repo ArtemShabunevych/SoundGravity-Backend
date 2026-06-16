@@ -22,6 +22,9 @@ export class Playlist {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  genre: string;
+
   @IsString()
   @IsOptional()
   description?: string;

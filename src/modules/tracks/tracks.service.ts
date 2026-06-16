@@ -1,4 +1,3 @@
-// src/modules/tracks/tracks.service.ts
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,14 +20,14 @@ export class TracksService {
   ) {
   }
 
-  async create(createTrackDto: CreateTrackDto, audioFile: Express.Multer.File): Promise<Track> {
+  async create(createTrackDto: CreateTrackDto, audioFile: Express.Multer.File, userId: string): Promise<Track> {
     if (!audioFile) {
-      throw new BadRequestException('Аудіофайл (audio) є обов’язковим у форматі form-data');
+      throw new BadRequestException('Audio file (audio) is required in form-data format');
     }
 
-    const user = await this.userRepository.findOne({ where: { id: createTrackDto.userId } });
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException(`Користувача з ID ${createTrackDto.userId} не знайдено`);
+      throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
     try {
@@ -51,8 +50,8 @@ export class TracksService {
       });
 
       return await this.trackRepository.save(newTrack);
-    } catch (error) {
-      throw new BadRequestException(`Помилка завантаження медіафайлів: ${error.message}`);
+    } catch (error: any) {
+      throw new BadRequestException(`Media upload failed: ${error.message || error}`);
     }
   }
 
@@ -68,20 +67,34 @@ export class TracksService {
       where: { id },
       relations: { user: true },
     });
-    if (!track) throw new NotFoundException(`Трек з ID ${id} не знайдено`);
+    if (!track) throw new NotFoundException('Track not found');
     return track;
   }
 
-  async update(id: string, updateTrackDto: UpdateTrackDto): Promise<Track> {
-    const track = await this.findOne(id);
+  async update(id: string, updateTrackDto: UpdateTrackDto, userId: string): Promise<Track> {
+    const track = await this.trackRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+    if (!track) throw new NotFoundException('Track not found');
+    if (!track.user || track.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this track');
+    }
     Object.assign(track, updateTrackDto);
     return await this.trackRepository.save(track);
   }
 
-  async remove(id: string): Promise<{ message: string }> {
-    const track = await this.findOne(id);
+  async remove(id: string, userId: string): Promise<{ message: string }> {
+    const track = await this.trackRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+    if (!track) throw new NotFoundException('Track not found');
+    if (!track.user || track.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this track');
+    }
     await this.trackRepository.remove(track);
-    return { message: 'Трек успішно видалено' };
+    return { message: 'Track deleted successfully' };
   }
 
   async updateVisibility(trackId: string, userId: string, status: VisibilityStatus) {
@@ -91,11 +104,11 @@ export class TracksService {
     });
 
     if (!track) {
-      throw new NotFoundException('Трек не знайдено');
+      throw new NotFoundException('Track not found');
     }
 
     if (!track.user || track.user.id.toString() !== userId.toString()) {
-      throw new ForbiddenException('Ви не є власником цього треку');
+      throw new ForbiddenException('You are not the owner of this track');
     }
 
     track.visibility = status;

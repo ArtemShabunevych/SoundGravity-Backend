@@ -1,9 +1,8 @@
 import { PlaylistsService } from './playlists.service';
-import { Controller, Post, Body, Req, Param, Delete, Get, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Req, Param, Delete, Get, UseGuards, Patch, ForbiddenException } from '@nestjs/common';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
-
 
 @Controller('playlists')
 @UseGuards(JwtAuthGuard)
@@ -18,28 +17,36 @@ export class PlaylistsController  {
     return this.playlistsService.create(dto, userId);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.playlistsService.findOneWithTracks(id);
-  }
   @Get('public')
   async findPublicPlaylists() {
     return this.playlistsService.findAllPublic(VisibilityStatus.PUBLIC);
   }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.playlistsService.findOneWithTracks(id);
+  }
+
   @Post(':playlistId/tracks/:trackId')
   async addTrack(
     @Param('playlistId') playlistId: string,
     @Param('trackId') trackId: string,
+    @Req() req: any,
   ) {
+    await this.playlistsService.checkOwnership(playlistId, req.user.userId);
     return this.playlistsService.addTrackToPlaylist(playlistId, trackId);
   }
+
   @Delete(':playlistId/tracks/:trackId')
   async removeTrack(
     @Param('playlistId') playlistId: string,
     @Param('trackId') trackId: string,
+    @Req() req: any,
   ) {
+    await this.playlistsService.checkOwnership(playlistId, req.user.userId);
     return this.playlistsService.removeTrackFromPlaylist(playlistId, trackId);
   }
+
   @Patch(':id/visibility')
   @UseGuards(JwtAuthGuard)
   async updateVisibility(
