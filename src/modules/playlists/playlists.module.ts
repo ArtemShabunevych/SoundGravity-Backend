@@ -6,11 +6,13 @@ import { Playlist } from './entities/playlist.entity';
 import { Track } from '../tracks/entities/track.entity';
 import { Like } from '../likes/entities/like.entity';
 import { AuthModule } from '../auth/auth.module';
+import { LikesModule } from '../likes/likes.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Playlist, Track, Like]),
     AuthModule,
+    LikesModule,
   ],
   controllers: [PlaylistsController],
   providers: [PlaylistsService],

@@ -7,12 +7,14 @@ import { User } from '../users/entities/user.entity';
 import { Like } from '../likes/entities/like.entity';
 import { CloudinaryModule } from '../../cloudinary/cloudinary.module';
 import { AuthModule } from '../auth/auth.module';
+import { LikesModule } from '../likes/likes.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Track, User, Like]),
     CloudinaryModule,
     AuthModule,
+    LikesModule,
   ],
   controllers: [TracksController],
   providers: [TracksService],

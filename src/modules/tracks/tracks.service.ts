@@ -62,6 +62,14 @@ export class TracksService {
     });
   }
 
+  async findAllByUser(userId: string): Promise<Track[]> {
+    return await this.trackRepository.find({
+      where: { user: { id: userId } },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async findOne(id: string): Promise<Track> {
     const track = await this.trackRepository.findOne({
       where: { id },

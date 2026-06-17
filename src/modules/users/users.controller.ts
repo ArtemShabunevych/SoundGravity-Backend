@@ -6,8 +6,11 @@ import {
   Param,
   Patch,
   Req,
-  UseGuards
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
 import { UpdateUsernameDto } from './dto/update-username.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -58,12 +61,19 @@ export class UsersController {
   }
   @Patch('avatar')
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('avatar'))
   async uploadAvatar(
     @Req() req: any,
-    @Body('avatar') base64String: string
+    @Body('avatar') base64String: string,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
+    if (file) {
+      const base64 = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+      return this.usersService.updateAvatar(req.user.userId, base64);
+    }
+
     if (!base64String) {
-      throw new BadRequestException('Base64 string not provided in avatar field');
+      throw new BadRequestException('Avatar file or base64 string is required');
     }
 
     return this.usersService.updateAvatar(req.user.userId, base64String);

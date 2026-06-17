@@ -3,12 +3,16 @@ import { Controller, Post, Body, Req, Param, Delete, Get, UseGuards, Patch, Forb
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
+import { LikesService } from '../likes/likes.service';
 
 @Controller('playlists')
 @UseGuards(JwtAuthGuard)
 export class PlaylistsController  {
 
-  constructor(private readonly playlistsService: PlaylistsService) {
+  constructor(
+    private readonly playlistsService: PlaylistsService,
+    private readonly likesService: LikesService,
+  ) {
   }
 
   @Post()
@@ -17,9 +21,24 @@ export class PlaylistsController  {
     return this.playlistsService.create(dto, userId);
   }
 
+  @Get()
+  async findAll(@Req() req: any) {
+    return this.playlistsService.findAllByUser(req.user.userId);
+  }
+
   @Get('public')
   async findPublicPlaylists() {
     return this.playlistsService.findAllPublic(VisibilityStatus.PUBLIC);
+  }
+
+  @Get('my-playlists')
+  async findMyPlaylists(@Req() req: any) {
+    return this.playlistsService.findAllByUser(req.user.userId);
+  }
+
+  @Get('liked')
+  async findLiked(@Req() req: any) {
+    return this.likesService.findLikedPlaylists(req.user.userId);
   }
 
   @Get(':id')

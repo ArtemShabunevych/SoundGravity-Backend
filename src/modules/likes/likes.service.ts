@@ -66,4 +66,20 @@ export class LikesService {
 
     return { liked: true, type: 'playlist' };
   }
+
+  async findLikedTracks(userId: string) {
+    const likes = await this.likeRepository.find({
+      where: { user: { id: userId } },
+      relations: { track: { user: true } },
+    });
+    return likes.filter(l => l.track).map(l => l.track);
+  }
+
+  async findLikedPlaylists(userId: string) {
+    const likes = await this.likeRepository.find({
+      where: { user: { id: userId } },
+      relations: { playlist: true },
+    });
+    return likes.filter(l => l.playlist).map(l => l.playlist);
+  }
 }

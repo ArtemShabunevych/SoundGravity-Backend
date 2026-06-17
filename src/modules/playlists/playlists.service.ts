@@ -77,6 +77,13 @@ export class PlaylistsService {
     return playlist;
   }
 
+  async findAllByUser(userId: string) {
+    return this.playlistRepository.find({
+      where: { user: { id: userId } },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async findAllPublic(status: VisibilityStatus) {
     return this.playlistRepository.find({
       where: { visibility: VisibilityStatus.PUBLIC },
