@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { Track } from './entities/track.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTrackDto } from './dto/create-track.dto';
@@ -68,6 +68,40 @@ export class TracksService {
       relations: { user: true },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async findByUsername(username: string): Promise<Track[]> {
+    const user = await this.userRepository.findOne({ where: { username } });
+    if (!user) throw new NotFoundException('User not found');
+    return await this.trackRepository.find({
+      where: { user: { id: user.id }, visibility: VisibilityStatus.PUBLIC },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findWithPagination(limit: number, cursor?: string) {
+    const take = limit || 10;
+    const where: any = {};
+
+    if (cursor) {
+      where.createdAt = LessThan(cursor);
+    }
+
+    const tracks = await this.trackRepository.find({
+      where,
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+      take: take + 1,
+    });
+
+    const hasMore = tracks.length > take;
+    if (hasMore) tracks.pop();
+
+    return {
+      tracks,
+      nextCursor: hasMore ? tracks[tracks.length - 1].createdAt.toISOString() : null,
+    };
   }
 
   async findOne(id: string): Promise<Track> {

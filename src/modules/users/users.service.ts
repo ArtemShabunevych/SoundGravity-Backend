@@ -90,7 +90,9 @@ export class UsersService {
     const user = await this.findOne(userId);
 
     return {
+      id: user.id,
       username: user.username,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt
     };
   }

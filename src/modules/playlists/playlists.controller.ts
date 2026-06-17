@@ -8,7 +8,6 @@ import { VisibilityStatus } from '../../enums/visibility-status.enum';
 import { LikesService } from '../likes/likes.service';
 
 @Controller('playlists')
-@UseGuards(JwtAuthGuard)
 export class PlaylistsController  {
 
   constructor(
@@ -18,14 +17,15 @@ export class PlaylistsController  {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(@Body() dto: CreatePlaylistDto, @Req() req: any) {
     const userId = req.user.userId;
     return this.playlistsService.create(dto, userId);
   }
 
   @Get()
-  async findAll(@Req() req: any) {
-    return this.playlistsService.findAllByUser(req.user.userId);
+  async findAll() {
+    return this.playlistsService.findAllPublic(VisibilityStatus.PUBLIC);
   }
 
   @Get('public')
@@ -34,13 +34,20 @@ export class PlaylistsController  {
   }
 
   @Get('my-playlists')
+  @UseGuards(JwtAuthGuard)
   async findMyPlaylists(@Req() req: any) {
     return this.playlistsService.findAllByUser(req.user.userId);
   }
 
   @Get('liked')
+  @UseGuards(JwtAuthGuard)
   async findLiked(@Req() req: any) {
     return this.likesService.findLikedPlaylists(req.user.userId);
+  }
+
+  @Get('user/:username')
+  async findByUsername(@Param('username') username: string) {
+    return this.playlistsService.findByUsername(username);
   }
 
   @Get(':id')
@@ -49,16 +56,19 @@ export class PlaylistsController  {
   }
 
   @Get(':id/like-status')
+  @UseGuards(JwtAuthGuard)
   async getLikeStatus(@Param('id') id: string, @Req() req: any) {
     return this.likesService.getPlaylistLikeStatus(id, req.user.userId);
   }
 
   @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
   async toggleLike(@Param('id') id: string, @Req() req: any) {
     return this.likesService.togglePlaylistLike(id, req.user.userId);
   }
 
   @Post(':id/cover')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('cover'))
   async uploadCover(
     @Param('id') id: string,
@@ -80,6 +90,7 @@ export class PlaylistsController  {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id') id: string,
     @Body() dto: UpdatePlaylistDto,
@@ -89,11 +100,13 @@ export class PlaylistsController  {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async remove(@Param('id') id: string, @Req() req: any) {
     return this.playlistsService.remove(id, req.user.userId);
   }
 
   @Post(':playlistId/tracks/:trackId')
+  @UseGuards(JwtAuthGuard)
   async addTrack(
     @Param('playlistId') playlistId: string,
     @Param('trackId') trackId: string,
@@ -104,6 +117,7 @@ export class PlaylistsController  {
   }
 
   @Delete(':playlistId/tracks/:trackId')
+  @UseGuards(JwtAuthGuard)
   async removeTrack(
     @Param('playlistId') playlistId: string,
     @Param('trackId') trackId: string,

@@ -8,7 +8,7 @@ import {
   Param,
   Patch,
   Delete,
-  BadRequestException, UseGuards, Req,
+  BadRequestException, UseGuards, Req, Query,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { TracksService } from './tracks.service';
@@ -20,13 +20,14 @@ import { LikesService } from '../likes/likes.service';
 
 
 @Controller('tracks')
-@UseGuards(JwtAuthGuard)
 export class TracksController {
   constructor(
     private readonly tracksService: TracksService,
     private readonly likesService: LikesService,
   ) {}
+
   @Post()
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'audio', maxCount: 1 }
   ]))
@@ -48,13 +49,28 @@ export class TracksController {
   }
 
   @Get('my-tracks')
+  @UseGuards(JwtAuthGuard)
   findMyTracks(@Req() req: any) {
     return this.tracksService.findAllByUser(req.user.userId);
   }
 
   @Get('liked')
+  @UseGuards(JwtAuthGuard)
   findLiked(@Req() req: any) {
     return this.likesService.findLikedTracks(req.user.userId);
+  }
+
+  @Get('pagination')
+  findWithPagination(
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.tracksService.findWithPagination(limit ? parseInt(limit, 10) : 10, cursor || undefined);
+  }
+
+  @Get('user/:username')
+  async findByUsername(@Param('username') username: string) {
+    return this.tracksService.findByUsername(username);
   }
 
   @Get(':id')
@@ -63,29 +79,35 @@ export class TracksController {
   }
 
   @Get(':id/like-status')
+  @UseGuards(JwtAuthGuard)
   getLikeStatus(@Param('id') id: string, @Req() req: any) {
     return this.likesService.getTrackLikeStatus(id, req.user.userId);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto, @Req() req: any) {
     return this.tracksService.update(id, updateTrackDto, req.user.userId);
   }
 
   @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
   toggleLike(@Param('id') id: string, @Req() req: any) {
     return this.likesService.toggleTrackLike(id, req.user.userId);
   }
 
   @Delete(':id/like')
+  @UseGuards(JwtAuthGuard)
   removeLike(@Param('id') id: string, @Req() req: any) {
     return this.likesService.toggleTrackLike(id, req.user.userId);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   remove(@Param('id') id: string, @Req() req: any) {
     return this.tracksService.remove(id, req.user.userId);
   }
+
   @Patch(':id/visibility')
   @UseGuards(JwtAuthGuard)
   async updateVisibility(

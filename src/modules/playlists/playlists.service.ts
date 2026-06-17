@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Playlist } from './entities/playlist.entity';
 import { Track } from '../tracks/entities/track.entity';
+import { User } from '../users/entities/user.entity';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
 import { UpdatePlaylistDto } from './dto/update-playlist.dto';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
@@ -15,6 +16,8 @@ export class PlaylistsService {
     private playlistRepository: Repository<Playlist>,
     @InjectRepository(Track)
     private trackRepository: Repository<Track>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -30,7 +33,7 @@ export class PlaylistsService {
   async findOneWithTracks(playlistId: string) {
     const playlist = await this.playlistRepository.findOne({
       where: { id: playlistId },
-      relations: { tracks: true },
+      relations: { tracks: true, user: true },
     });
 
     if (!playlist) {
@@ -87,10 +90,21 @@ export class PlaylistsService {
     });
   }
 
+  async findByUsername(username: string) {
+    const user = await this.userRepository.findOne({ where: { username } });
+    if (!user) throw new NotFoundException('User not found');
+    return await this.playlistRepository.find({
+      where: { user: { id: user.id }, visibility: VisibilityStatus.PUBLIC },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async findAllPublic(status: VisibilityStatus) {
     return this.playlistRepository.find({
       where: { visibility: VisibilityStatus.PUBLIC },
-      order: { likesCount: 'DESC' },
+      relations: { user: true },
+      order: { createdAt: 'DESC' },
     });
   }
 
