@@ -82,4 +82,18 @@ export class LikesService {
     });
     return likes.filter(l => l.playlist).map(l => l.playlist);
   }
+
+  async getTrackLikeStatus(trackId: string, userId: string) {
+    const existingLike = await this.likeRepository.findOne({
+      where: { user: { id: userId }, track: { id: trackId } },
+    });
+    return { liked: !!existingLike };
+  }
+
+  async getPlaylistLikeStatus(playlistId: string, userId: string) {
+    const existingLike = await this.likeRepository.findOne({
+      where: { user: { id: userId }, playlist: { id: playlistId } },
+    });
+    return { liked: !!existingLike };
+  }
 }

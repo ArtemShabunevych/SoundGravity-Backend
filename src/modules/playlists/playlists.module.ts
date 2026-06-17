@@ -7,12 +7,14 @@ import { Track } from '../tracks/entities/track.entity';
 import { Like } from '../likes/entities/like.entity';
 import { AuthModule } from '../auth/auth.module';
 import { LikesModule } from '../likes/likes.module';
+import { CloudinaryModule } from '../../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Playlist, Track, Like]),
     AuthModule,
     LikesModule,
+    CloudinaryModule,
   ],
   controllers: [PlaylistsController],
   providers: [PlaylistsService],

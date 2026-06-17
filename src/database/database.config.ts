@@ -16,6 +16,6 @@ export const databaseConfig: TypeOrmModuleAsyncOptions = {
     password: configService.get<string>('DB_PASSWORD'),
     database: configService.get<string>('DB_DATABASE'),
     entities: [User, Track, Playlist, Like],
-    synchronize: true,
+    synchronize: configService.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
   }),
 };

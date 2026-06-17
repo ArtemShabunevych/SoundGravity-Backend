@@ -4,7 +4,9 @@ import { Repository } from 'typeorm';
 import { Playlist } from './entities/playlist.entity';
 import { Track } from '../tracks/entities/track.entity';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
+import { UpdatePlaylistDto } from './dto/update-playlist.dto';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 
 @Injectable()
 export class PlaylistsService {
@@ -13,6 +15,7 @@ export class PlaylistsService {
     private playlistRepository: Repository<Playlist>,
     @InjectRepository(Track)
     private trackRepository: Repository<Track>,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   async create(dto: CreatePlaylistDto, userId: string) {
@@ -89,6 +92,61 @@ export class PlaylistsService {
       where: { visibility: VisibilityStatus.PUBLIC },
       order: { likesCount: 'DESC' },
     });
+  }
+
+  async remove(id: string, userId: string) {
+    const playlist = await this.playlistRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+
+    if (!playlist.user || playlist.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this playlist');
+    }
+
+    await this.playlistRepository.remove(playlist);
+    return { message: 'Playlist deleted successfully' };
+  }
+
+  async update(id: string, dto: UpdatePlaylistDto, userId: string) {
+    const playlist = await this.playlistRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+
+    if (!playlist.user || playlist.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this playlist');
+    }
+
+    Object.assign(playlist, dto);
+    return this.playlistRepository.save(playlist);
+  }
+
+  async updateCover(id: string, userId: string, base64String: string) {
+    const playlist = await this.playlistRepository.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+
+    if (!playlist) {
+      throw new NotFoundException('Playlist not found');
+    }
+
+    if (!playlist.user || playlist.user.id !== userId) {
+      throw new ForbiddenException('You are not the owner of this playlist');
+    }
+
+    const upload = await this.cloudinary.uploadImageBase64(base64String);
+    playlist.coverUrl = upload.secure_url;
+    return this.playlistRepository.save(playlist);
   }
 
   async updateVisibility(playlistId: string, userId: string, status: VisibilityStatus) {

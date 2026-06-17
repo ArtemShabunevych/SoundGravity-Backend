@@ -61,6 +61,12 @@ export class TracksController {
   findOne(@Param('id') id: string) {
     return this.tracksService.findOne(id);
   }
+
+  @Get(':id/like-status')
+  getLikeStatus(@Param('id') id: string, @Req() req: any) {
+    return this.likesService.getTrackLikeStatus(id, req.user.userId);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto, @Req() req: any) {
     return this.tracksService.update(id, updateTrackDto, req.user.userId);

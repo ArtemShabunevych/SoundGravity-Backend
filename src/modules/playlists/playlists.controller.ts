@@ -1,6 +1,8 @@
 import { PlaylistsService } from './playlists.service';
-import { Controller, Post, Body, Req, Param, Delete, Get, UseGuards, Patch, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Body, Req, Param, Delete, Get, UseGuards, Patch, BadRequestException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CreatePlaylistDto } from './dto/create-playlist.dto';
+import { UpdatePlaylistDto } from './dto/update-playlist.dto';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
 import { LikesService } from '../likes/likes.service';
@@ -44,6 +46,51 @@ export class PlaylistsController  {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.playlistsService.findOneWithTracks(id);
+  }
+
+  @Get(':id/like-status')
+  async getLikeStatus(@Param('id') id: string, @Req() req: any) {
+    return this.likesService.getPlaylistLikeStatus(id, req.user.userId);
+  }
+
+  @Post(':id/like')
+  async toggleLike(@Param('id') id: string, @Req() req: any) {
+    return this.likesService.togglePlaylistLike(id, req.user.userId);
+  }
+
+  @Post(':id/cover')
+  @UseInterceptors(FileInterceptor('cover'))
+  async uploadCover(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body('cover') base64String: string,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    let coverData = base64String;
+
+    if (file) {
+      coverData = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    }
+
+    if (!coverData) {
+      throw new BadRequestException('Cover file or base64 string is required');
+    }
+
+    return this.playlistsService.updateCover(id, req.user.userId, coverData);
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePlaylistDto,
+    @Req() req: any,
+  ) {
+    return this.playlistsService.update(id, dto, req.user.userId);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string, @Req() req: any) {
+    return this.playlistsService.remove(id, req.user.userId);
   }
 
   @Post(':playlistId/tracks/:trackId')

@@ -27,7 +27,8 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    const { password, ...userData } = user;
+    return userData;
   }
   async setDescription(userId: string, dto: SetDescriptionDto) {
     const user = await this.userRepository.findOne({
