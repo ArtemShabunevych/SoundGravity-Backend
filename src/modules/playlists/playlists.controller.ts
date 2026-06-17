@@ -67,7 +67,7 @@ export class PlaylistsController  {
     return this.likesService.togglePlaylistLike(id, req.user.userId);
   }
 
-  @Post(':id/cover')
+  @Patch(':id/cover')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('cover'))
   async uploadCover(

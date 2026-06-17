@@ -4,13 +4,14 @@ import {
   Body,
   UseInterceptors,
   UploadedFiles,
+  UploadedFile,
   Get,
   Param,
   Patch,
   Delete,
   BadRequestException, UseGuards, Req, Query,
 } from '@nestjs/common';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { TracksService } from './tracks.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
@@ -41,6 +42,12 @@ export class TracksController {
       throw new BadRequestException('Audio file (audio) is required');
     }
     return this.tracksService.create(createTrackDto, audioFile, req.user.userId);
+  }
+
+  @Post('upload-temp')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  async uploadTemp(@UploadedFile() file: Express.Multer.File) {
+    return this.tracksService.uploadTemp(file);
   }
 
   @Get()

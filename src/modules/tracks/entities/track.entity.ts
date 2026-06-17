@@ -19,7 +19,7 @@ export class Track {
   @Column()
   title: string;
 
-  @Column({ nullable: true })
+  @Column()
   genre: string;
 
   @IsString()
@@ -29,7 +29,7 @@ export class Track {
   @Column()
   audioUrl: string;
 
-  @Column()
+  @Column({ nullable: true })
   coverUrl: string;
 
   @Column({ nullable: true })

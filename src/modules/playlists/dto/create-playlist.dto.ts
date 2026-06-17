@@ -1,13 +1,15 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsIn } from 'class-validator';
+import { GENRES } from '../../../constants/genres';
 
 export class CreatePlaylistDto {
   @IsString()
   @IsNotEmpty()
   name: string;
 
+  @IsNotEmpty()
   @IsString()
-  @IsOptional()
-  genre?: string;
+  @IsIn(GENRES)
+  genre: string;
 
   @IsString()
   @IsOptional()

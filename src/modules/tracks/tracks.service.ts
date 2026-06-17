@@ -31,21 +31,24 @@ export class TracksService {
     }
 
     try {
+      const audioUpload = await this.cloudinary.uploadAudioStream(audioFile.buffer);
 
-      const [audioUpload, coverUpload] = await Promise.all([
-        this.cloudinary.uploadAudioStream(audioFile.buffer),
-        this.cloudinary.uploadImageBase64(createTrackDto.cover),
-      ]);
+      let coverUrl: string | undefined;
+      let dominantColor = '#121212';
 
-      const dominantColor = coverUpload.colors?.[0]?.[0] || '#121212';
+      if (createTrackDto.cover) {
+        const coverUpload = await this.cloudinary.uploadImageBase64(createTrackDto.cover);
+        coverUrl = coverUpload.secure_url;
+        dominantColor = coverUpload.colors?.[0]?.[0] || '#121212';
+      }
 
       const newTrack = this.trackRepository.create({
         title: createTrackDto.title,
         genre: createTrackDto.genre,
         description: createTrackDto.description,
         audioUrl: audioUpload.secure_url,
-        coverUrl: coverUpload.secure_url,
-        dominantColor: dominantColor,
+        coverUrl,
+        dominantColor,
         user: user,
       });
 
@@ -104,7 +107,18 @@ export class TracksService {
     };
   }
 
+  async uploadTemp(file: Express.Multer.File): Promise<{ url: string }> {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    const upload = await this.cloudinary.uploadAudioStream(file.buffer);
+    return { url: upload.secure_url };
+  }
+
   async findOne(id: string): Promise<Track> {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) throw new NotFoundException('Track not found');
+
     const track = await this.trackRepository.findOne({
       where: { id },
       relations: { user: true },
