@@ -17,6 +17,9 @@ export const databaseConfig: TypeOrmModuleAsyncOptions = {
     database: configService.get<string>('DB_DATABASE'),
     entities: [User, Track, Playlist, Like],
     synchronize: configService.get<string>('DB_SYNCHRONIZE', 'false') === 'true',
-    ssl:true
+
+    ssl: configService.get<string>('NODE_ENV') === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
   }),
 };
