@@ -49,6 +49,7 @@ export class TracksService {
         audioUrl: audioUpload.secure_url,
         coverUrl,
         dominantColor,
+        duration: audioUpload.duration || null,
         user: user,
       });
 
@@ -60,6 +61,7 @@ export class TracksService {
 
   async findAll(): Promise<Track[]> {
     return await this.trackRepository.find({
+      where: { visibility: VisibilityStatus.PUBLIC },
       relations: { user: true },
       order: { createdAt: 'DESC' },
     });
@@ -85,7 +87,7 @@ export class TracksService {
 
   async findWithPagination(limit: number, cursor?: string) {
     const take = limit || 10;
-    const where: any = {};
+    const where: any = { visibility: VisibilityStatus.PUBLIC };
 
     if (cursor) {
       where.createdAt = LessThan(cursor);
@@ -120,7 +122,7 @@ export class TracksService {
     if (!uuidRegex.test(id)) throw new NotFoundException('Track not found');
 
     const track = await this.trackRepository.findOne({
-      where: { id },
+      where: { id, visibility: VisibilityStatus.PUBLIC },
       relations: { user: true },
     });
     if (!track) throw new NotFoundException('Track not found');

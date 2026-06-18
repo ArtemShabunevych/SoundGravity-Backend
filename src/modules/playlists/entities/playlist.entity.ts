@@ -25,12 +25,16 @@ export class Playlist {
   @Column()
   genre: string;
 
+  @Column({ nullable: true })
   @IsString()
   @IsOptional()
   description?: string;
 
   @Column({ nullable: true })
   coverUrl: string;
+
+  @Column({ nullable: true, type: 'varchar' })
+  dominantColor: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

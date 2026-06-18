@@ -45,6 +45,7 @@ export class TracksController {
   }
 
   @Post('upload-temp')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   async uploadTemp(@UploadedFile() file: Express.Multer.File) {
     return this.tracksService.uploadTemp(file);

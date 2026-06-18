@@ -22,6 +22,7 @@ export class Track {
   @Column()
   genre: string;
 
+  @Column({ nullable: true })
   @IsString()
   @IsOptional()
   description?: string;
@@ -34,6 +35,9 @@ export class Track {
 
   @Column({ nullable: true })
   dominantColor: string;
+
+  @Column({ nullable: true, type: 'float' })
+  duration: number;
 
   @CreateDateColumn()
   createdAt: Date;

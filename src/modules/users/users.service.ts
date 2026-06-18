@@ -82,6 +82,8 @@ export class UsersService {
     return {
       id: user.id,
       username: user.username,
+      avatarUrl: user.avatarUrl,
+      description: user.description,
       createdAt: user.createdAt
     };
   }

@@ -28,11 +28,6 @@ export class PlaylistsController  {
     return this.playlistsService.findAllPublic(VisibilityStatus.PUBLIC);
   }
 
-  @Get('public')
-  async findPublicPlaylists() {
-    return this.playlistsService.findAllPublic(VisibilityStatus.PUBLIC);
-  }
-
   @Get('my-playlists')
   @UseGuards(JwtAuthGuard)
   async findMyPlaylists(@Req() req: any) {

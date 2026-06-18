@@ -32,7 +32,7 @@ export class PlaylistsService {
 
   async findOneWithTracks(playlistId: string) {
     const playlist = await this.playlistRepository.findOne({
-      where: { id: playlistId },
+      where: { id: playlistId, visibility: VisibilityStatus.PUBLIC },
       relations: { tracks: true, user: true },
     });
 
@@ -86,6 +86,7 @@ export class PlaylistsService {
   async findAllByUser(userId: string) {
     return this.playlistRepository.find({
       where: { user: { id: userId } },
+      relations: { user: true, tracks: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -93,9 +94,9 @@ export class PlaylistsService {
   async findByUsername(username: string) {
     const user = await this.userRepository.findOne({ where: { username } });
     if (!user) throw new NotFoundException('User not found');
-    return await this.playlistRepository.find({
+    return this.playlistRepository.find({
       where: { user: { id: user.id }, visibility: VisibilityStatus.PUBLIC },
-      relations: { user: true },
+      relations: { user: true, tracks: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -103,7 +104,7 @@ export class PlaylistsService {
   async findAllPublic(status: VisibilityStatus) {
     return this.playlistRepository.find({
       where: { visibility: VisibilityStatus.PUBLIC },
-      relations: { user: true },
+      relations: { user: true, tracks: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -160,6 +161,7 @@ export class PlaylistsService {
 
     const upload = await this.cloudinary.uploadImageBase64(base64String);
     playlist.coverUrl = upload.secure_url;
+    playlist.dominantColor = upload.colors?.[0]?.[0] || null;
     return this.playlistRepository.save(playlist);
   }
 
