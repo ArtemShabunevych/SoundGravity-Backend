@@ -2,14 +2,20 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { SetDescriptionDto } from './dto/set-description.dto';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>
+    @InjectRepository(User) private userRepository: Repository<User>,
+  private readonly cloudinaryService: CloudinaryService,
+
   ) {}
 
-  findAll() {
-    return this.userRepository.find();
+  async findAll() {
+    const users = await this.userRepository.find();
+
+    return users.map(({ password, ...rest }) => rest);
   }
 
   async findOne(id: string) {
@@ -21,9 +27,21 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    const { password, ...userData } = user;
+    return userData;
   }
+  async setDescription(userId: string, dto: SetDescriptionDto) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
 
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    user.description = dto.newDescription;
+
+    return this.userRepository.save(user);
+  }
   async updateUsername(newUsername: string, userId: string) {
     const user = await this.userRepository.findOne({
       where: {
@@ -34,6 +52,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
 
     const existingUser = await this.userRepository.findOne({
       where: {
@@ -63,6 +82,8 @@ export class UsersService {
     return {
       id: user.id,
       username: user.username,
+      avatarUrl: user.avatarUrl,
+      description: user.description,
       createdAt: user.createdAt
     };
   }
@@ -71,7 +92,9 @@ export class UsersService {
     const user = await this.findOne(userId);
 
     return {
+      id: user.id,
       username: user.username,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt
     };
   }
@@ -83,5 +106,17 @@ export class UsersService {
       username: user.username,
       createdAt: user.createdAt
     };
+  }
+  async updateAvatar(userId: string, base64String: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const cloudinaryResponse = await this.cloudinaryService.uploadAvatarBase64(base64String);
+
+    user.avatarUrl = cloudinaryResponse.secure_url;
+
+    return this.userRepository.save(user);
   }
 }

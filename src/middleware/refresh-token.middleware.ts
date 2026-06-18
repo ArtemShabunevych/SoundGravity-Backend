@@ -27,14 +27,14 @@ export class RefreshAccessTokenMiddleware implements NestMiddleware {
     try {
       this.authService.verifyAccessToken(accessToken);
       return next();
-    } catch (err) {
+    } catch (err: any) {
       if (err.name === 'TokenExpiredError') {
         try {
           const { accessToken: newAccessToken } =
             await this.authService.refresh(refreshToken);
 
           req.headers['authorization'] = `Bearer ${newAccessToken}`;
-        } catch(err) {
+        } catch {
           throw new UnauthorizedException('Invalid refresh token');
         }
       }

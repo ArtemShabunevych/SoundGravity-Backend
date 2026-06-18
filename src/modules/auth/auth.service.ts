@@ -13,7 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class AuthService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>, // ⚠️ Використовуємо це ім'я скрізь
+    private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -114,9 +114,9 @@ export class AuthService {
     });
   }
 
-  async loginOrCreateGoogleUser(googleUser: any) {
+  async loginOrCreateGoogleUser(googleUser: { email: string; firstName: string }) {
     if (!googleUser) {
-      throw new BadRequestException('Дані від Google відсутні');
+      throw new BadRequestException('Google data is missing');
     }
 
     let user = await this.userRepository.findOne({
@@ -136,18 +136,24 @@ export class AuthService {
       await this.userRepository.save(user);
     }
 
-    const payload = { email: user.email, userId: user.id, username: user.username };
+    const payload = { userId: user.id, username: user.username };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: '2h',
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: '7d',
+    });
+
+    const { password, ...userData } = user;
 
     return {
-      access_token: this.jwtService.sign(payload, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: '2h',
-      }),
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
+      user: userData,
+      accessToken,
+      refreshToken,
     };
   }
 }

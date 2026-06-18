@@ -10,9 +10,13 @@ export class Like {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @CreateDateColumn()
+  createdAt: Date;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
+
   @ManyToOne(() => Track, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'trackId' })
   track: Track | null;
@@ -20,7 +24,4 @@ export class Like {
   @ManyToOne(() => Playlist, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'playlistId' })
   playlist: Playlist | null;
-
-  @CreateDateColumn()
-  createdAt: Date;
 }

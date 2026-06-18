@@ -19,8 +19,14 @@ export class User {
   @Column()
   username: string;
 
-  @Column()
+  @Column({ select: false })
   password: string;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ nullable: true })
+  avatarUrl: string;
 
   @OneToMany(() => Track, (track) => track.user)
   tracks: Track[];

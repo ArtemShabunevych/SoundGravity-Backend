@@ -24,20 +24,27 @@ export class LikesService {
     }
 
     const existingLike = await this.likeRepository.findOne({
-      where: {
-        user: { id: userId },
-        track: { id: trackId },
-      },
+      where: { user: { id: userId }, track: { id: trackId } },
     });
 
     if (existingLike) {
       await this.likeRepository.remove(existingLike);
-      return { liked: false, type: 'track' };
+      await this.trackRepository.decrement({ id: trackId }, 'likesCount', 1);
+
+      const likesCount = await this.likeRepository.count({
+        where: { track: { id: trackId } },
+      });
+      return { liked: false, type: 'track', likesCount };
     }
 
     const newLike = this.likeRepository.create({ user, track, playlist: null });
     await this.likeRepository.save(newLike);
-    return { liked: true, type: 'track' };
+    await this.trackRepository.increment({ id: trackId }, 'likesCount', 1);
+
+    const likesCount = await this.likeRepository.count({
+      where: { track: { id: trackId } },
+    });
+    return { liked: true, type: 'track', likesCount };
   }
 
   async togglePlaylistLike(playlistId: string, userId: string) {
@@ -49,19 +56,56 @@ export class LikesService {
     }
 
     const existingLike = await this.likeRepository.findOne({
-      where: {
-        user: { id: userId },
-        playlist: { id: playlistId },
-      },
+      where: { user: { id: userId }, playlist: { id: playlistId } },
     });
 
     if (existingLike) {
       await this.likeRepository.remove(existingLike);
-      return { liked: false, type: 'playlist' };
+      await this.playlistRepository.decrement({ id: playlistId }, 'likesCount', 1);
+
+      const likesCount = await this.likeRepository.count({
+        where: { playlist: { id: playlistId } },
+      });
+      return { liked: false, type: 'playlist', likesCount };
     }
 
     const newLike = this.likeRepository.create({ user, playlist, track: null });
     await this.likeRepository.save(newLike);
-    return { liked: true, type: 'playlist' };
+    await this.playlistRepository.increment({ id: playlistId }, 'likesCount', 1);
+
+    const likesCount = await this.likeRepository.count({
+      where: { playlist: { id: playlistId } },
+    });
+    return { liked: true, type: 'playlist', likesCount };
+  }
+
+  async findLikedTracks(userId: string) {
+    const likes = await this.likeRepository.find({
+      where: { user: { id: userId } },
+      relations: { track: { user: true } },
+    });
+    return likes.filter(l => l.track).map(l => l.track);
+  }
+
+  async findLikedPlaylists(userId: string) {
+    const likes = await this.likeRepository.find({
+      where: { user: { id: userId } },
+      relations: { playlist: true },
+    });
+    return likes.filter(l => l.playlist).map(l => l.playlist);
+  }
+
+  async getTrackLikeStatus(trackId: string, userId: string) {
+    const existingLike = await this.likeRepository.findOne({
+      where: { user: { id: userId }, track: { id: trackId } },
+    });
+    return { liked: !!existingLike };
+  }
+
+  async getPlaylistLikeStatus(playlistId: string, userId: string) {
+    const existingLike = await this.likeRepository.findOne({
+      where: { user: { id: userId }, playlist: { id: playlistId } },
+    });
+    return { liked: !!existingLike };
   }
 }

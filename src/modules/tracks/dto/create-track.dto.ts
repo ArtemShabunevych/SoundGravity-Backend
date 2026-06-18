@@ -1,22 +1,21 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
+import { GENRES } from '../../../constants/genres';
 
 export class CreateTrackDto {
   @IsNotEmpty()
   @IsString()
   title: string;
 
+  @IsNotEmpty()
   @IsString()
+  @IsIn(GENRES)
   genre: string;
 
   @IsString()
   @IsOptional()
   description?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  cover: string;
-
-  @IsNotEmpty()
-  @IsUUID()
-  userId: string;
+  cover?: string;
 }
