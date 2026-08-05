@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Playlist } from './entities/playlist.entity';
@@ -60,7 +64,9 @@ export class PlaylistsService {
   async addTrackToPlaylist(playlistId: string, trackId: string) {
     const playlist = await this.findOneWithTracks(playlistId);
 
-    const track = await this.trackRepository.findOne({ where: { id: trackId } });
+    const track = await this.trackRepository.findOne({
+      where: { id: trackId },
+    });
     if (!track) {
       throw new NotFoundException('Track not found');
     }
@@ -101,7 +107,7 @@ export class PlaylistsService {
     });
   }
 
-  async findAllPublic(status: VisibilityStatus) {
+  async findAllPublic() {
     return this.playlistRepository.find({
       where: { visibility: VisibilityStatus.PUBLIC },
       relations: { user: true, tracks: true },
@@ -165,7 +171,11 @@ export class PlaylistsService {
     return this.playlistRepository.save(playlist);
   }
 
-  async updateVisibility(playlistId: string, userId: string, status: VisibilityStatus) {
+  async updateVisibility(
+    playlistId: string,
+    userId: string,
+    status: VisibilityStatus,
+  ) {
     const playlist = await this.playlistRepository.findOne({
       where: { id: playlistId },
       relations: { user: true },

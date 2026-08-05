@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { LoginUserDto } from './dto/login-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -37,18 +41,13 @@ export class AuthService {
 
     const savedUser = await this.userRepository.save(user);
 
-    const payload = { userId: savedUser.id, username: savedUser.username };
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: '2h',
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: '7d',
-    });
+    const { accessToken, refreshToken } = this.signTokens(
+      savedUser.id,
+      savedUser.username,
+    );
 
     const { password, ...userData } = savedUser;
+    void password;
     return {
       user: userData,
       accessToken,
@@ -75,46 +74,47 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { userId: user.id, username: user.username };
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-      expiresIn: '2h',
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: '7d',
-    });
+    const { accessToken, refreshToken } = this.signTokens(
+      user.id,
+      user.username,
+    );
 
     const { password, ...userData } = user;
+    void password;
     return { user: userData, accessToken, refreshToken };
   }
 
   async refresh(refreshToken: string) {
     try {
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
+      const payload = await this.jwtService.verifyAsync<{
+        userId: string;
+        username: string;
+      }>(refreshToken, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
       const newAccessToken = this.jwtService.sign(
         { userId: payload.userId, username: payload.username },
         {
           secret: this.configService.get<string>('JWT_SECRET'),
-          expiresIn: '2h'
+          expiresIn: '2h',
         },
       );
-      return { accessToken: newAccessToken };
-    } catch (err) {
+      return { accessToken: newAccessToken, refreshToken };
+    } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
 
   verifyAccessToken(token: string) {
-    return this.jwtService.verify(token, {
+    return this.jwtService.verify<{ userId: string; username: string }>(token, {
       secret: this.configService.get<string>('JWT_SECRET'),
     });
   }
 
-  async loginOrCreateGoogleUser(googleUser: { email: string; firstName: string }) {
+  async loginOrCreateGoogleUser(googleUser: {
+    email: string;
+    firstName: string;
+  }) {
     if (!googleUser) {
       throw new BadRequestException('Google data is missing');
     }
@@ -136,7 +136,23 @@ export class AuthService {
       await this.userRepository.save(user);
     }
 
-    const payload = { userId: user.id, username: user.username };
+    const { accessToken, refreshToken } = this.signTokens(
+      user.id,
+      user.username,
+    );
+
+    const { password, ...userData } = user;
+    void password;
+
+    return {
+      user: userData,
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  private signTokens(userId: string, username: string) {
+    const payload = { userId, username };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
@@ -148,12 +164,6 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    const { password, ...userData } = user;
-
-    return {
-      user: userData,
-      accessToken,
-      refreshToken,
-    };
+    return { accessToken, refreshToken };
   }
 }

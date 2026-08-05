@@ -1,21 +1,23 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { SetDescriptionDto } from './dto/set-description.dto';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
-  private readonly cloudinaryService: CloudinaryService,
-
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async findAll() {
-    const users = await this.userRepository.find();
-
-    return users.map(({ password, ...rest }) => rest);
+    return this.userRepository.find();
   }
 
   async findOne(id: string) {
@@ -27,9 +29,9 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const { password, ...userData } = user;
-    return userData;
+    return user;
   }
+
   async setDescription(userId: string, dto: SetDescriptionDto) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
@@ -38,26 +40,23 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
     user.description = dto.newDescription;
 
     return this.userRepository.save(user);
   }
+
   async updateUsername(newUsername: string, userId: string) {
     const user = await this.userRepository.findOne({
-      where: {
-        id: userId,
-      },
+      where: { id: userId },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-
     const existingUser = await this.userRepository.findOne({
-      where: {
-        username: newUsername,
-      },
+      where: { username: newUsername },
     });
 
     if (existingUser && existingUser.id !== userId) {
@@ -78,13 +77,12 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-
     return {
       id: user.id,
       username: user.username,
       avatarUrl: user.avatarUrl,
       description: user.description,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     };
   }
 
@@ -95,7 +93,7 @@ export class UsersService {
       id: user.id,
       username: user.username,
       avatarUrl: user.avatarUrl,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     };
   }
 
@@ -104,16 +102,21 @@ export class UsersService {
 
     return {
       username: user.username,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     };
   }
+
   async updateAvatar(userId: string, base64String: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const cloudinaryResponse = await this.cloudinaryService.uploadAvatarBase64(base64String);
+
+    const cloudinaryResponse =
+      await this.cloudinaryService.uploadAvatarBase64(base64String);
 
     user.avatarUrl = cloudinaryResponse.secure_url;
 

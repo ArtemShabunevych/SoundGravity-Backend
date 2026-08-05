@@ -25,7 +25,10 @@ export class CloudinaryService {
           resource_type: 'video',
         },
         (error, result) => {
-          if (error) return reject(error);
+          if (error) {
+            reject(new Error(error.message));
+            return;
+          }
 
           if (!result) {
             return reject(new Error('Cloudinary upload returned no result'));
@@ -51,8 +54,8 @@ export class CloudinaryService {
           width: 150,
           height: 150,
           crop: 'fill',
-          gravity: 'face'
-        }
+          gravity: 'face',
+        },
       ],
     });
   }

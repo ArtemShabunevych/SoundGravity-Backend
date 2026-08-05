@@ -15,7 +15,7 @@ import { UsersService } from './users.service';
 import { UpdateUsernameDto } from './dto/update-username.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { SetDescriptionDto } from './dto/set-description.dto';
-
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('users')
 export class UsersController {
@@ -29,13 +29,13 @@ export class UsersController {
 
   @Get('user')
   @UseGuards(JwtAuthGuard)
-  getUser(@Req() req) {
+  getUser(@Req() req: AuthenticatedRequest) {
     return this.usersService.getUserProfile(req.user.userId);
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getMe(@Req() req) {
+  getMe(@Req() req: AuthenticatedRequest) {
     return this.usersService.getMyProfile(req.user.userId);
   }
 
@@ -52,20 +52,26 @@ export class UsersController {
 
   @Patch('description')
   @UseGuards(JwtAuthGuard)
-  async updateDescription(@Req() req: any, @Body() dto: SetDescriptionDto) {
+  async updateDescription(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: SetDescriptionDto,
+  ) {
     return this.usersService.setDescription(req.user.userId, dto);
   }
 
   @Patch('/update-username')
   @UseGuards(JwtAuthGuard)
-  updateUsername(@Body() dto: UpdateUsernameDto, @Req() req) {
+  updateUsername(
+    @Body() dto: UpdateUsernameDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.usersService.updateUsername(dto.newUsername, req.user.userId);
   }
   @Patch('avatar')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('avatar'))
   async uploadAvatar(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Body('avatar') base64String: string,
     @UploadedFile() file?: Express.Multer.File,
   ) {

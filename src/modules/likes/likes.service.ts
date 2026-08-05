@@ -11,8 +11,10 @@ export class LikesService {
   constructor(
     @InjectRepository(Like) private readonly likeRepository: Repository<Like>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(Track) private readonly trackRepository: Repository<Track>,
-    @InjectRepository(Playlist) private readonly playlistRepository: Repository<Playlist>,
+    @InjectRepository(Track)
+    private readonly trackRepository: Repository<Track>,
+    @InjectRepository(Playlist)
+    private readonly playlistRepository: Repository<Playlist>,
   ) {}
 
   async toggleTrackLike(trackId: string, userId: string) {
@@ -49,7 +51,9 @@ export class LikesService {
 
   async togglePlaylistLike(playlistId: string, userId: string) {
     const user = await this.userRepository.findOneBy({ id: userId });
-    const playlist = await this.playlistRepository.findOneBy({ id: playlistId });
+    const playlist = await this.playlistRepository.findOneBy({
+      id: playlistId,
+    });
 
     if (!user || !playlist) {
       throw new NotFoundException('User or Playlist not found');
@@ -61,7 +65,11 @@ export class LikesService {
 
     if (existingLike) {
       await this.likeRepository.remove(existingLike);
-      await this.playlistRepository.decrement({ id: playlistId }, 'likesCount', 1);
+      await this.playlistRepository.decrement(
+        { id: playlistId },
+        'likesCount',
+        1,
+      );
 
       const likesCount = await this.likeRepository.count({
         where: { playlist: { id: playlistId } },
@@ -71,7 +79,11 @@ export class LikesService {
 
     const newLike = this.likeRepository.create({ user, playlist, track: null });
     await this.likeRepository.save(newLike);
-    await this.playlistRepository.increment({ id: playlistId }, 'likesCount', 1);
+    await this.playlistRepository.increment(
+      { id: playlistId },
+      'likesCount',
+      1,
+    );
 
     const likesCount = await this.likeRepository.count({
       where: { playlist: { id: playlistId } },
@@ -84,7 +96,7 @@ export class LikesService {
       where: { user: { id: userId } },
       relations: { track: { user: true } },
     });
-    return likes.filter(l => l.track).map(l => l.track);
+    return likes.filter((l) => l.track).map((l) => l.track);
   }
 
   async findLikedPlaylists(userId: string) {
@@ -92,7 +104,7 @@ export class LikesService {
       where: { user: { id: userId } },
       relations: { playlist: true },
     });
-    return likes.filter(l => l.playlist).map(l => l.playlist);
+    return likes.filter((l) => l.playlist).map((l) => l.playlist);
   }
 
   async getTrackLikeStatus(trackId: string, userId: string) {

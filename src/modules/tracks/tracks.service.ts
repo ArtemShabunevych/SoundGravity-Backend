@@ -1,13 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, FindOptionsWhere } from 'typeorm';
 import { Track } from './entities/track.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
-
 
 @Injectable()
 export class TracksService {
@@ -17,12 +21,17 @@ export class TracksService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private cloudinary: CloudinaryService,
-  ) {
-  }
+  ) {}
 
-  async create(createTrackDto: CreateTrackDto, audioFile: Express.Multer.File, userId: string): Promise<Track> {
+  async create(
+    createTrackDto: CreateTrackDto,
+    audioFile: Express.Multer.File,
+    userId: string,
+  ): Promise<Track> {
     if (!audioFile) {
-      throw new BadRequestException('Audio file (audio) is required in form-data format');
+      throw new BadRequestException(
+        'Audio file (audio) is required in form-data format',
+      );
     }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -31,13 +40,17 @@ export class TracksService {
     }
 
     try {
-      const audioUpload = await this.cloudinary.uploadAudioStream(audioFile.buffer);
+      const audioUpload = await this.cloudinary.uploadAudioStream(
+        audioFile.buffer,
+      );
 
       let coverUrl: string | undefined;
       let dominantColor = '#121212';
 
       if (createTrackDto.cover) {
-        const coverUpload = await this.cloudinary.uploadImageBase64(createTrackDto.cover);
+        const coverUpload = await this.cloudinary.uploadImageBase64(
+          createTrackDto.cover,
+        );
         coverUrl = coverUpload.secure_url;
         dominantColor = coverUpload.colors?.[0]?.[0] || '#121212';
       }
@@ -49,13 +62,14 @@ export class TracksService {
         audioUrl: audioUpload.secure_url,
         coverUrl,
         dominantColor,
-        duration: audioUpload.duration || null,
+        duration: Number(audioUpload.duration) || undefined,
         user: user,
       });
 
       return await this.trackRepository.save(newTrack);
-    } catch (error: any) {
-      throw new BadRequestException(`Media upload failed: ${error.message || error}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(`Media upload failed: ${message}`);
     }
   }
 
@@ -87,10 +101,12 @@ export class TracksService {
 
   async findWithPagination(limit: number, cursor?: string) {
     const take = limit || 10;
-    const where: any = { visibility: VisibilityStatus.PUBLIC };
+    const where: FindOptionsWhere<Track> = {
+      visibility: VisibilityStatus.PUBLIC,
+    };
 
     if (cursor) {
-      where.createdAt = LessThan(cursor);
+      where.createdAt = LessThan(new Date(cursor));
     }
 
     const tracks = await this.trackRepository.find({
@@ -105,7 +121,9 @@ export class TracksService {
 
     return {
       tracks,
-      nextCursor: hasMore ? tracks[tracks.length - 1].createdAt.toISOString() : null,
+      nextCursor: hasMore
+        ? tracks[tracks.length - 1].createdAt.toISOString()
+        : null,
     };
   }
 
@@ -118,7 +136,8 @@ export class TracksService {
   }
 
   async findOne(id: string): Promise<Track> {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) throw new NotFoundException('Track not found');
 
     const track = await this.trackRepository.findOne({
@@ -129,7 +148,11 @@ export class TracksService {
     return track;
   }
 
-  async update(id: string, updateTrackDto: UpdateTrackDto, userId: string): Promise<Track> {
+  async update(
+    id: string,
+    updateTrackDto: UpdateTrackDto,
+    userId: string,
+  ): Promise<Track> {
     const track = await this.trackRepository.findOne({
       where: { id },
       relations: { user: true },
@@ -155,7 +178,11 @@ export class TracksService {
     return { message: 'Track deleted successfully' };
   }
 
-  async updateVisibility(trackId: string, userId: string, status: VisibilityStatus) {
+  async updateVisibility(
+    trackId: string,
+    userId: string,
+    status: VisibilityStatus,
+  ) {
     const track = await this.trackRepository.findOne({
       where: { id: trackId },
       relations: { user: true },

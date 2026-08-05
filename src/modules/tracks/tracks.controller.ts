@@ -9,16 +9,22 @@ import {
   Param,
   Patch,
   Delete,
-  BadRequestException, UseGuards, Req, Query,
+  BadRequestException,
+  UseGuards,
+  Req,
+  Query,
 } from '@nestjs/common';
-import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { TracksService } from './tracks.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 import { VisibilityStatus } from '../../enums/visibility-status.enum';
 import { LikesService } from '../likes/likes.service';
-
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('tracks')
 export class TracksController {
@@ -29,24 +35,28 @@ export class TracksController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'audio', maxCount: 1 }
-  ]))
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'audio', maxCount: 1 }]))
   create(
     @Body() createTrackDto: CreateTrackDto,
     @UploadedFiles() files: { audio?: Express.Multer.File[] },
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
   ) {
     const audioFile = files?.audio?.[0];
     if (!audioFile) {
       throw new BadRequestException('Audio file (audio) is required');
     }
-    return this.tracksService.create(createTrackDto, audioFile, req.user.userId);
+    return this.tracksService.create(
+      createTrackDto,
+      audioFile,
+      req.user.userId,
+    );
   }
 
   @Post('upload-temp')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async uploadTemp(@UploadedFile() file: Express.Multer.File) {
     return this.tracksService.uploadTemp(file);
   }
@@ -58,13 +68,13 @@ export class TracksController {
 
   @Get('my-tracks')
   @UseGuards(JwtAuthGuard)
-  findMyTracks(@Req() req: any) {
+  findMyTracks(@Req() req: AuthenticatedRequest) {
     return this.tracksService.findAllByUser(req.user.userId);
   }
 
   @Get('liked')
   @UseGuards(JwtAuthGuard)
-  findLiked(@Req() req: any) {
+  findLiked(@Req() req: AuthenticatedRequest) {
     return this.likesService.findLikedTracks(req.user.userId);
   }
 
@@ -73,7 +83,10 @@ export class TracksController {
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
   ) {
-    return this.tracksService.findWithPagination(limit ? parseInt(limit, 10) : 10, cursor || undefined);
+    return this.tracksService.findWithPagination(
+      limit ? parseInt(limit, 10) : 10,
+      cursor || undefined,
+    );
   }
 
   @Get('user/:username')
@@ -88,31 +101,35 @@ export class TracksController {
 
   @Get(':id/like-status')
   @UseGuards(JwtAuthGuard)
-  getLikeStatus(@Param('id') id: string, @Req() req: any) {
+  getLikeStatus(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.likesService.getTrackLikeStatus(id, req.user.userId);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() updateTrackDto: UpdateTrackDto, @Req() req: any) {
+  update(
+    @Param('id') id: string,
+    @Body() updateTrackDto: UpdateTrackDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     return this.tracksService.update(id, updateTrackDto, req.user.userId);
   }
 
   @Post(':id/like')
   @UseGuards(JwtAuthGuard)
-  toggleLike(@Param('id') id: string, @Req() req: any) {
+  toggleLike(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.likesService.toggleTrackLike(id, req.user.userId);
   }
 
   @Delete(':id/like')
   @UseGuards(JwtAuthGuard)
-  removeLike(@Param('id') id: string, @Req() req: any) {
+  removeLike(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.likesService.toggleTrackLike(id, req.user.userId);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string, @Req() req: any) {
+  remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     return this.tracksService.remove(id, req.user.userId);
   }
 
@@ -120,9 +137,13 @@ export class TracksController {
   @UseGuards(JwtAuthGuard)
   async updateVisibility(
     @Param('id') trackId: string,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Body('status') status: VisibilityStatus,
   ) {
-    return this.tracksService.updateVisibility(trackId, req.user.userId, status);
+    return this.tracksService.updateVisibility(
+      trackId,
+      req.user.userId,
+      status,
+    );
   }
 }

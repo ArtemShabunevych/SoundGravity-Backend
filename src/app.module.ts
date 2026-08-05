@@ -3,13 +3,17 @@ import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
-import { RefreshAccessTokenMiddleware } from "./middleware/refresh-token.middleware";
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
+import { RefreshAccessTokenMiddleware } from './middleware/refresh-token.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { TracksModule } from './modules/tracks/tracks.module';
 import { LikesModule } from './modules/likes/likes.module';
-
 
 @Module({
   imports: [
@@ -21,7 +25,7 @@ import { LikesModule } from './modules/likes/likes.module';
     AuthModule,
     TracksModule,
     PlaylistsModule,
-    LikesModule
+    LikesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

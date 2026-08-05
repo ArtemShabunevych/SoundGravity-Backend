@@ -39,8 +39,6 @@ export class Playlist {
   @CreateDateColumn()
   createdAt: Date;
 
-
-
   @Column({
     type: 'enum',
     enum: VisibilityStatus,
