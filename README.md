@@ -225,5 +225,7 @@ curl http://localhost:3000/api/users/me \
 
 ## 📧 Контакти
 
-- Автор: **Artem Shabunevych**
+- Автори:
+- **Artem Shabunevych** - Github @ArtemShabunevych
+- **Oleksiy Roschin** - Github @Qefor
 - Репозиторій: [github.com/ArtemShabunevych/TPC-Sound-Backend](https://github.com/ArtemShabunevych/TPC-Sound-Backend)
